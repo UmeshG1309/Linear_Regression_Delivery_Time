@@ -1,0 +1,36 @@
+import pandas as pd
+import numpy as np
+import matplotlib.pylab as plt
+from sklearn.model_selection import train_test_split
+deliv = pd.read_csv("C:/Users/Mukesh/Downloads/delivery_time.csv")
+deliv.columns = ['delivery_time','sorting_time']
+deliv_train,deliv_test = train_test_split(deliv,test_size =0.2)
+deliv_train.describe()
+import seaborn as sb
+sb.boxplot(x = 'delivery_time',y ='sorting_time',data = deliv_train,color = 'green')
+plt.hist(deliv_train.delivery_time)
+plt.hist(deliv_train.sorting_time)
+plt.boxplot(deliv_train.delivery_time)
+plt.boxplot(deliv_train.sorting_time)
+import statsmodels.formula.api as smf
+model_train = smf.ols("np.log(delivery_time)~np.log(sorting_time)",data =deliv_train).fit()
+model_train.summary()
+#R-squared =0.75
+ deliv_train['sortingtime_sq'] = deliv_train.sorting_time*deliv_train.sorting_time
+deliv_train['sortingtime_cb'] = deliv_train.sorting_time*deliv_train.sorting_time*deliv_train.sorting_time
+model_train1 = smf.ols("delivery_time~sorting_time+sortingtime_sq+sortingtime_cb",data = deliv_train).fit()
+model_train1.summary()
+#  R-squared = 0.73
+model_train.conf_int = 0.05
+pred_train = model_train.predict(deliv_train['sorting_time'])
+pred_trainexp = np.exp(pred_train)
+resid = pred_trainexp-deliv_train.delivery_time
+stand_resid = model_train.resid_pearson
+plt.scatter(pred_trainexp,deliv_train.delivery_time);plt.xlabel = "predicted values";plt.ylabel = "actual values"
+plt.plot(model_train.resid_pearson,"bo");plt.axhline(y=0,color = 'green');plt.xlabel = "observation number";plt.ylabel ="standardized value"
+plt.hist(model_train.resid_pearson)
+np.sqrt(np.mean(resid*resid))    #RSME
+# testing 
+test_pred = model_train.predict(deliv_test)
+test_resid = test_pred-deliv_test.delivery_time 
+np.sqrt(np.mean(test_resid*test_resid))
